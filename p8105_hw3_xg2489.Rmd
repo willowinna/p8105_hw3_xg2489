@@ -2,9 +2,107 @@
 title: "p8105_hw3_xg2489"
 output: github_document
 ---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(p8105.datasets)
 
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
 #Problem 1
 
+load the data
+
+```{r}
+data("ny_noaa")
+```
+
+## data cleaning
+
+```{r}
+ny_noaa_df = ny_noaa |>
+  mutate(
+    year  = year(date),   
+    month = month(date),  
+    day   = mday(date),
+    prcp = prcp / 10,       
+    tmax = as.numeric(tmax) / 10, 
+    tmin = as.numeric(tmin) / 10
+  ) 
+
+dim(ny_noaa_df)
+summary(ny_noaa_df)
+
+ny_noaa_df |>
+  count(snow) |>
+  head(10)
+```
+
+##January vs July
+
+```{r}
+mean_tmax = ny_noaa_df |>
+  filter(month == 1 | month == 7) |>
+  mutate(
+    month = factor(month, levels = c(1,7), labels = c("January", "July"))
+  ) |>
+  group_by(id, year, month) |>
+  summarise(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) |>
+  view()
+```
+
+```{r}
+mean_tmax |> 
+  ggplot(aes(x = factor(year), y = mean_tmax, colour = month)) + 
+  geom_boxplot() +
+  geom_smooth(aes(group = month), se = FALSE) + 
+  facet_grid(. ~ month) +
+  scale_x_discrete(
+    breaks = seq(1980, 2010, by = 5)
+  ) +
+  geom_smooth(se = FALSE) + 
+  labs(
+    title = "Average Max Temperature Trend in January and July ", 
+    x = "Year", 
+    y = "Max Temp",
+    caption = "Average Max Temperature in January and in July in Each Station Across Years",
+    color = "Month"
+  ) 
+```
+
+```{r}
+ny_noaa_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_hex() 
+
+
+ny_noaa_df |>
+  filter(snow > 0, snow < 100) |>
+  ggplot(aes(x = factor(year), y = snow )) +
+  geom_point() +
+  labs(x = "Snowfall (mm)", y = "Year", title = "Snowfall (0 < snow < 100 mm) by year") 
+
+
+```
+
+
 #Problem 2
+
+
 
 #Problem 3
