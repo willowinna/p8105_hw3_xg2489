@@ -5,6 +5,8 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(p8105.datasets)
+library(patchwork)
+library(ggridges)
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -14,13 +16,9 @@ knitr::opts_chunk$set(
 
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
-options(
-  ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
-)
 
-scale_colour_discrete = scale_colour_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
+
+
 ```
 #Problem 1
 
@@ -35,7 +33,7 @@ data("ny_noaa")
 ```{r}
 ny_noaa_df = ny_noaa |>
   mutate(
-    year  = year(date),   
+    year  = factor(year(date)),   
     month = month(date),  
     day   = mday(date),
     prcp = prcp / 10,       
@@ -68,7 +66,7 @@ mean_tmax = ny_noaa_df |>
 
 ```{r}
 mean_tmax |> 
-  ggplot(aes(x = factor(year), y = mean_tmax, colour = month)) + 
+  ggplot(aes(x = year, y = mean_tmax, colour = month)) + 
   geom_boxplot() +
   geom_smooth(aes(group = month), se = FALSE) + 
   facet_grid(. ~ month) +
@@ -86,17 +84,32 @@ mean_tmax |>
 ```
 
 ```{r}
-ny_noaa_df |> 
+plot_1 = ny_noaa_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
-  geom_hex() 
+  geom_hex() +
+  theme(legend.position = "right") + 
+  labs(
+    title = "Max Temperature Versus Min temperature", 
+    x = "Minimum temperature", 
+    y = "Maximum temperature"
+  ) +
+  theme(
+    legend.position = c(0.87, 0.15), 
+    legend.background = element_rect(fill="white", alpha=0.8) # 加半透明白底，避免盖住点
+  )
+  
 
 
-ny_noaa_df |>
+plot_2 = ny_noaa_df |>
   filter(snow > 0, snow < 100) |>
-  ggplot(aes(x = factor(year), y = snow )) +
-  geom_point() +
-  labs(x = "Snowfall (mm)", y = "Year", title = "Snowfall (0 < snow < 100 mm) by year") 
+  ggplot(aes(x = snow, y = year)) +
+  geom_density_ridges() +
+  scale_y_discrete(
+    breaks = seq(1980, 2010, by = 5)
+  ) +
+  labs(x ="Snowfall (mm)", y =  "Year", title = "Snowfall by year") 
 
+plot_1 + plot_2
 
 ```
 
