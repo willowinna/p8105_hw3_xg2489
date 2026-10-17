@@ -128,6 +128,7 @@ The right ridgeline plot illustrates the probability density distribution of ann
 
 # Problem 2
 
+## Tidy data
 ```{r}
 accel_df =
   read_csv("data/nhanes_accel.csv")|>
@@ -157,9 +158,62 @@ nhanes_df =
 
 First, we import the datasets and use `janitor::clean_names` to standardize the variable names, for `covar_df`, first 4 rows are skipped as it is descriptive content. Then we combine 2 datasets by `seqn` and exclude 22 participants less than 21 years of ages and those with missing demographic data. Variables `sex` and `education` are encoded to factors (ordered factors for `education`).
 
-```{r}
+## Table
 
+
+```{r}
+nhanes_df |>
+  count(education, sex) |>
+  pivot_wider(
+    names_from = sex,
+    values_from = n
+    )
+
+
+nhanes_df |>
+  ggplot(aes(x = age, fill = sex)) +
+  geom_density(alpha = 0.4) +
+  facet_grid(. ~ education) +
+  labs(
+    title = "Age Distribution by Sex and Education Level",
+    x = "Age",
+    y = "Count",
+    fill = "Sex"
+  ) +
+  theme_bw()
 ```
 
+The table shows sample size imbalance across education groups where nearly equal sexes for less-than-high-school, more males for high school equivalent and slightly more females in the highest education group.
+
+The density plots reveal clear age differences by education level. Participants with lower educational attainment tend to be older while those with more than high school education level tend yo be younger, especially in female participants. Within each education panel, male and female age distributions differ, especially in the high school equivalent and more-than-high-school categories. The high school equivalent group contains a substantial number of younger males, creating an earlier peak in the male age distribution. In more-than-high-school category, female group has higher peak between 20 and 40 than male group.
+
+## Total activities
+
+```{r}
+
+nhanes_df |>
+  rowwise() |>  
+  mutate(
+    total_act = sum(c_across(min1:min1440))
+  ) |>
+  ungroup() |>
+  ggplot(aes(x = age, y = total_act, colour = sex)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ education) +
+  labs(
+    title = "Total Daily Activity vs Age by Education and Sex",
+    x = "Age",
+    y = "Total daily MIMS activity",
+    color = "Sex"
+  ) +
+  theme_bw()
+```
+
+Thess scatter plots display the relationship between total daily MIMS activity and age, separated by education level and colored by sex. Across all 3 education groups, total daily physical activity generally declines with increasing age.
+
+Sex differences in activity levels vary across educational backgrounds. For individuals with a high school education or higher, females consistently maintain higher average MIMS activity levels than males across almost all age groups. While in the 'Less than high school' group, males and females show similar levels during early adulthood and among participants older than 40, males have higher activitiy levels than females.
+
+Education appears to buffer against early-age activity decline. Participants in the 'More than high school' category display a relatively plateaued activity level between ages 20 and 60 for both males and females. In contrast, those with 'Less than high school' or 'High school equivalent' education demonstrate earlier peaks and sharper drops in activity.
 
 # Problem 3
