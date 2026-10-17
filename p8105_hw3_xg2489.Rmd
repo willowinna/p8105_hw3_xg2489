@@ -18,8 +18,6 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 # Problem 1
 
-load the data
-
 ```{r}
 data("ny_noaa")
 ```
@@ -93,6 +91,7 @@ July maximum temperatures are consistently much warmer than January maximum temp
 Outliers are present in both months. January has many warm high-value outliers. July also a few low-value outliers, including an unusually cold observation in 1988, representing rare anomalous weather events.
 
 ## `1.3`
+
 ```{r}
 plot_1 = ny_noaa_df |> 
   ggplot(aes(x = tmin, y = tmax)) + 
@@ -129,6 +128,7 @@ The right ridgeline plot illustrates the probability density distribution of ann
 # Problem 2
 
 ## Tidy data
+
 ```{r}
 accel_df =
   read_csv("data/nhanes_accel.csv")|>
@@ -159,7 +159,6 @@ nhanes_df =
 First, we import the datasets and use `janitor::clean_names` to standardize the variable names, for `covar_df`, first 4 rows are skipped as it is descriptive content. Then we combine 2 datasets by `seqn` and exclude 22 participants less than 21 years of ages and those with missing demographic data. Variables `sex` and `education` are encoded to factors (ordered factors for `education`).
 
 ## Table
-
 
 ```{r}
 nhanes_df |>
@@ -204,16 +203,48 @@ nhanes_df |>
   labs(
     title = "Total Daily Activity vs Age by Education and Sex",
     x = "Age",
-    y = "Total daily MIMS activity",
+    y = "Total Daily MIMS Activity",
     color = "Sex"
   ) +
   theme_bw()
 ```
 
-Thess scatter plots display the relationship between total daily MIMS activity and age, separated by education level and colored by sex. Across all 3 education groups, total daily physical activity generally declines with increasing age.
+These scatter plots display the relationship between total daily MIMS activity and age, separated by education level and colored by sex. Across all 3 education groups, total daily physical activity generally declines with increasing age.
 
-Sex differences in activity levels vary across educational backgrounds. For individuals with a high school education or higher, females consistently maintain higher average MIMS activity levels than males across almost all age groups. While in the 'Less than high school' group, males and females show similar levels during early adulthood and among participants older than 40, males have higher activitiy levels than females.
+Sex differences in activity levels vary across educational backgrounds. For individuals with a high school education or higher, females consistently maintain higher average MIMS activity levels than males across almost all age groups. While in the 'Less than high school' group, males and females show similar levels during early adulthood and among participants older than 40, males have higher activity levels than females.
 
 Education appears to buffer against early-age activity decline. Participants in the 'More than high school' category display a relatively plateaued activity level between ages 20 and 60 for both males and females. In contrast, those with 'Less than high school' or 'High school equivalent' education demonstrate earlier peaks and sharper drops in activity.
 
+## 3 panel plot
+
+```{r}
+nhanes_df |>
+  pivot_longer(
+    cols = min1:min1440,
+    names_to = "minute",
+    values_to = "MIMS"
+  ) |>
+  mutate(
+    minute = as.integer(str_remove(minute, "min")),
+    hour = minute / 60
+  ) |>
+  ggplot(aes(x = hour, y = MIMS, color = sex)) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ education) +
+  labs(
+    title = "24 hour Activity Time Course by Education Level",
+    x = "Hour of Day (0~24)",
+    y = "Average MIMS Value",
+    color = "Sex"
+  ) +
+  theme_bw()
+```
+
+This figure shows loess-smoothed curves of minute-level MIMS activity values over the 24-hour day, faceted by education level and colored by sex. Across all education levels, activity is lowest during sleep (before 5 AM) and increases up rapidly starting at 5 AM as people wake up and begin their day.
+
+Women generally show higher activity levels during the day than men in most groups. For people with a high school equivalent or higher education, women maintain noticeably higher activity values from morning until evening. However, in the 'Less than high school' group, men and women follow almost identical daytime patterns, with women only showing a slightly higher peak around noon.
+
+Educational background changes how daytime activity is distributed. People with less than high school education have a single sharp peak around midday followed by a steady drop in the afternoon. In contrast, those with higher education maintain a steady, high-level plateau of activity throughout normal working hours (from 10 AM to 6 PM).
+
 # Problem 3
+
