@@ -248,3 +248,70 @@ Educational background changes how daytime activity is distributed. People with 
 
 # Problem 3
 
+## data import & cleaning
+```{r}
+jan_2020 = 
+  read_csv("data/Jan 2020 Citi.csv") |>
+  mutate(
+    month = "January",
+    year = 2020)
+jan_2024 = 
+  read_csv("data/Jan 2024 Citi.csv") |>
+  mutate(
+    month = "January",
+    year = 2024)
+jul_2020 = 
+  read_csv("data/July 2020 Citi.csv") |>
+  mutate(
+    month = "July",
+    year = 2020)
+jul_2024 = 
+  read_csv("data/July 2024 Citi.csv") |>
+  mutate(
+    month = "July",
+    year = 2024)
+
+citi_df = bind_rows(
+  jan_2020, jan_2024, jul_2020, jul_2024) |>
+  mutate(
+    month = factor(month, levels = c("January", "July"), ordered = TRUE),
+    year = as.integer(year),
+    weekdays = factor(weekdays,
+                      levels = c("Monday","Tuesday","Wednesday","Thursday",
+                                 "Friday","Saturday","Sunday"),
+                      ordered = TRUE),
+    rideable_type = factor(rideable_type, levels = c("classic_bike","electric_bike")),
+    member_casual = factor(member_casual, levels = c("casual","member"))
+  )
+```
+
+4 city bike sample satasets were imported and added rows for `year` and `month`. They were combined together by `bind_rows`. Categorical variables (`month`, `weekdays`, `rideable_type`, `member_casual`) were converted to factors with appropriate levels and ordering. The final dataset has 56121 rows and 9 variables.
+
+## total number of rides table
+
+```{r}
+citi_df |>
+  count(year, month, member_casual) |>
+  pivot_wider(
+    names_from = member_casual,
+    values_from = n) |>
+  mutate(total = casual + member) |>
+  arrange(year, month)
+```
+
+This table presents ride counts grouped by year, month and rider membership status. Members account for most rides in all time periods. July ridership is higher than January ridership in both 2020 and 2024, demonstrating strong seasonal demand. Total ridership increased greatly from 2020 to 2024 for both months. July saw the most dramatic expansion, with large increases in both casual and member trips from 2020 to 2024.
+
+## 5 post popular starting stations table
+
+```{r}
+citi_df |>
+  filter(year == 2024, month == "July") |>
+  count(start_station_name, name = "ride_count") |>
+  arrange(desc(ride_count)) |>
+  slice_head(n = 5)
+```
+
+This table lists the five most common starting stations for Citi Bike rides in July 2024, sorted in descending order of trip count. Pier 61 at Chelsea Piers had the largest number of originating trips. The ride counts across these top five stations are similar.
+
+
+
